@@ -45,33 +45,19 @@ def cross_validation_split(dataset, n_folds):
 		dataset_split.append(fold)
 	return dataset_split
 
-def createSubsets(dataset, ratio):
-    dataset_split = list()
-    dataset_copy = list(dataset)
-    subset_size = int(len(dataset) / ratio)
-    for i in range(int(ratio)):
-        subset = list()
-        while len(subset) < subset_size:
-            index = randrange(len(dataset_copy))
-            subset.append(dataset_copy.pop(index))
-        dataset_split.append(subset)
-    return dataset_split
-
-def createSubsets(neg_set, pos_set, ratio):
+def balanceSubsets(neg_set, pos_set, ratio):
     dataset_split = list()
     dataset_copy = list(neg_set)
-    subset_size = int(len(neg_set) / ratio)
+    subset_size = math.floor(len(neg_set) / ratio)
     for i in range(int(ratio)):
         subset = list()
-        subset.append(pos_set)
-        while len(subset) < subset_size:
+        for element in pos_set:
+            subset.append(element)
+        while len(subset) < 2 * subset_size + 1:
             index = randrange(len(dataset_copy))
             subset.append(dataset_copy.pop(index))
-            print(subset)
-            print(pos_set)
-            print("-------------------------------------------------------------------")
         dataset_split.append(subset)
-    return dataset_split
+    return(dataset_split)
 
 def createSubset(dataset):
     dataset_split = list()
@@ -132,7 +118,8 @@ def fscore_metric(sensitivity, ppv):
 # Evaluate an algorithm using a cross validation split
 def evaluate_algorithm(dataset, algorithm, ratio, *args):
 	#folds = cross_validation_split(dataset, n_folds)
-	folds = createSubsets(x[0], x[1], ratio)
+	folds = balanceSubsets(x[0], x[1], ratio)
+	print(len(folds))
 	scores = list()
 	for fold in folds:
 		train_set = list(folds)
@@ -256,12 +243,9 @@ def getRatio(dataset):
     num_positive = 0
     for j in dataset:
         if (j[len(j)-1]) == 0:
-            print(j[len(j)-1])
             num_negative += 1
         else:
-            print(j[len(j)-1])
             num_positive += 1
-    print(num_negative, num_positive)
     ratio = num_negative / float(num_positive)
     return math.ceil(ratio)
 
@@ -289,8 +273,6 @@ def random_forest(train, test, max_depth, min_size, sample_size, n_trees, n_feat
 	predictions = [bagging_predict(trees, row) for row in test]
 	return(predictions)
 
-# Test the random forest algorithm
-seed(2)
 # load and prepare data
 filename = 'sonar.all-data-removed.csv'
 dataset = load_csv(filename)
@@ -305,7 +287,7 @@ x = createSubset(dataset)
 print(len(x[0]))
 print("BOY")
 print(len(x[1]))
-createSubsets(x[0], x[1], k)
+balanceSubsets(x[0], x[1], k)
 
 # evaluate algorithm
 n_folds = 5
