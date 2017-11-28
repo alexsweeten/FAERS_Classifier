@@ -274,7 +274,7 @@ def random_forest(train, test, max_depth, min_size, sample_size, n_trees, n_feat
 	return(predictions)
 
 # load and prepare data
-filename = 'sonar.all-data-removed.csv'
+filename = 'master_table_new.csv'
 dataset = load_csv(filename)
 # convert string attributes to integers
 for i in range(0, len(dataset[0])-1):
@@ -284,9 +284,8 @@ str_column_to_int(dataset, len(dataset[0])-1)
 k = getRatio(dataset)
 
 x = createSubset(dataset)
-print(len(x[0]))
-print("BOY")
-print(len(x[1]))
+print('# of Negative Class:  ' +  str(len(x[0])))
+print('# of Positive Class:  ' +  str(len(x[1])))
 balanceSubsets(x[0], x[1], k)
 
 # evaluate algorithm
@@ -295,11 +294,7 @@ max_depth = 10
 min_size = 1
 sample_size = 1.0
 n_features = int(sqrt(len(dataset[0])-1))
-for n_trees in [1, 5, 10, 50]:
+for n_trees in [1, 5, 10]:
 	scores = evaluate_algorithm(dataset, random_forest, k, max_depth, min_size, sample_size, n_trees, n_features)
 	print('Trees: %d' % n_trees)
 	print('Scores: %s' % scores)
-	print('Mean Accuracy: %.3f%%' % ((scores[0] + scores[4] + scores[8] + scores[12] + scores[16])/5) )
-	print('Mean Sensitivity: %.3f%%' % ((scores[1] + scores[5] + scores[9] + scores[13] + scores[17])/5) )
-	print('Mean PPV: %.3f%%' % ((scores[2] + scores[6] + scores[10] + scores[14] + scores[18])/5) )
-	print('Mean F-Score: %.3f%%' % ((scores[3] + scores[7] + scores[11] + scores[15] + scores[19])/5) )
