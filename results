@@ -1,0 +1,25 @@
+# Negative Class: 11052
+# Positive Class: 1176
+Ratio -/+: 9.39795918367
+
+
+--- Balanced Random Forest Results ---
+Accuracy: 0.797023225384
+Sensitivity: 0.97572815534
+PPV: 0.329688354292
+F-Score 0.492848385779
+
+
+--- Single Decision Tree Results ---
+Accuracy: 0.88927052666
+Sensitivity: 0.97572815534
+PPV: 0.329688354292
+F-Score 0.416881998277
+
+
+--- Unbalanced Random Forest Results ---
+Accuracy: 0.904808635918
+Sensitivity: 0.97572815534
+PPV: 0.329688354292
+F-Score 0.265151515152
+

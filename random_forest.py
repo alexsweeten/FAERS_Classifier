@@ -1,13 +1,20 @@
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 from csv import reader
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
 import os
 
 def random_forest(features, target):
     clf = RandomForestClassifier()
+    clf.fit(features, target)
+    return clf
+
+def decision_tree(features, target):
+    clf = DecisionTreeClassifier()
     clf.fit(features, target)
     return clf
 
@@ -88,40 +95,73 @@ def main():
         #compute a random forest for each of the split datasets
         dataset = pd.read_csv(filename)
         headers = list(dataset)
-        train_x, test_x, train_y, test_y = split_dataset(dataset, 0.7, headers[1:-1], headers[-1])
+        train_x, test_x, train_y, test_y = split_dataset(dataset, 0.8, headers[1:-1], headers[-1])
         trained_model = random_forest(train_x, train_y)
         model_list.append(trained_model)
 
-    print(model_list)
     trained_model = model_list[0]
     for i in range(1, len(model_list)):
         trained_model = balance_rfs(trained_model, model_list[i])
-    print(trained_model)
 
 
-    filename = 'master_table_unbalanced.csv'
+    filename = 'master_table_full.csv'
     dataset = pd.read_csv(filename)
     headers = list(dataset)
-    dataset_statistics(dataset)
     last_column = dataset.iloc[:,-1]
     classes = getRatio(last_column)
-    print(classes)
 
-    train_x, test_x, train_y, test_y = split_dataset(dataset, 0.5, headers[1:-1], headers[-1])
+    train_x, test_x, train_y, test_y = split_dataset(dataset, 0.8, headers[1:-1], headers[-1])
+    single_tree = decision_tree(train_x, train_y)
+    random_tree = random_forest(train_x, train_y)
     predictions = trained_model.predict(test_x)
+    predictions_2 = single_tree.predict(test_x)
+    predictions_3 = random_tree.predict(test_x)
 
     print('# Negative Class: %s' % classes[0])
     print('# Positive Class: %s' % classes[1])
-    print('Ratio +/-: %s' % (classes[0]/float(classes[1])))
+    print('Ratio -/+: %s' % (classes[0]/float(classes[1])))
     print('\n')
+    print('--- Balanced Random Forest Results ---')
     print('Accuracy: %s' % accuracy_score(test_y, predictions))
     sens = sensitivity_metric(list(test_y), predictions)
     print('Sensitivity: %s' % sens)
     ppv = ppv_metric(list(test_y), predictions)
     print('PPV: %s' % ppv)
     print('F-Score %s' % fscore_metric(sens, ppv))
-    #print(weights)
-#print('Trees: %d' % n_trees)
-#print('Scores: %s' % scores)
+
+    print('\n')
+    print("--- Unbalanced Random Forest Results ---")
+
+    print('Accuracy: %s' % accuracy_score(test_y, predictions_3))
+    sens_3 = sensitivity_metric(list(test_y), predictions_3)
+    print('Sensitivity: %s' % sens)
+    ppv_3 = ppv_metric(list(test_y), predictions_3)
+    print('PPV: %s' % ppv)
+    print('F-Score %s' % fscore_metric(sens_3, ppv_3))
+
+    print('\n')
+    print("--- Single Decision Tree Results ---")
+
+    print('Accuracy: %s' % accuracy_score(test_y, predictions_2))
+    sens_2 = sensitivity_metric(list(test_y), predictions_2)
+    print('Sensitivity: %s' % sens)
+    ppv_2 = ppv_metric(list(test_y), predictions_2)
+    print('PPV: %s' % ppv)
+    print('F-Score %s' % fscore_metric(sens_2, ppv_2))
+
+
+    plt.figure(1)
+    plt.rcParams.update({'font.size': 12})
+    plt.plot(fscore_metric(sens, ppv), accuracy_score(test_y, predictions), 'ro')
+    plt.plot(fscore_metric(sens_3, ppv), accuracy_score(test_y, predictions_3), 'bs')
+    plt.plot(fscore_metric(sens_2, ppv), accuracy_score(test_y, predictions_2), 'g^')
+
+    plt.ylabel('Accuracy')
+    plt.title('Classifier Accuracy over F-Score')
+    plt.xlabel('F-Score')
+    plt.axis([0, 1, 0, 1])
+    plt.legend()
+    plt.show()
+
 if __name__ == "__main__":
     main()
