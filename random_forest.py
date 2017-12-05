@@ -1,5 +1,7 @@
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+
 from csv import reader
 import pandas as pd
 import numpy as np
@@ -15,6 +17,11 @@ def random_forest(features, target):
 
 def decision_tree(features, target):
     clf = DecisionTreeClassifier()
+    clf.fit(features, target)
+    return clf
+
+def svm(features, target):
+    clf = SVC()
     clf.fit(features, target)
     return clf
 
@@ -91,11 +98,11 @@ def main():
     counter = 1
     model_list = []
 
-    for filename in os.listdir('datasets'):
+    for filename in os.listdir('./clipped_datasets'):
         #compute a random forest for each of the split datasets
-        dataset = pd.read_csv(filename)
+        dataset = pd.read_csv("./clipped_datasets/" + filename)
         headers = list(dataset)
-        train_x, test_x, train_y, test_y = split_dataset(dataset, 0.8, headers[1:-1], headers[-1])
+        train_x, test_x, train_y, test_y = split_dataset(dataset, 0.5, headers[1:-1], headers[-1])
         trained_model = random_forest(train_x, train_y)
         model_list.append(trained_model)
 
@@ -110,12 +117,14 @@ def main():
     last_column = dataset.iloc[:,-1]
     classes = getRatio(last_column)
 
-    train_x, test_x, train_y, test_y = split_dataset(dataset, 0.8, headers[1:-1], headers[-1])
+    train_x, test_x, train_y, test_y = split_dataset(dataset, 0.5, headers[1:-1], headers[-1])
     single_tree = decision_tree(train_x, train_y)
     random_tree = random_forest(train_x, train_y)
+    support_vector = svm(train_x, train_y)
     predictions = trained_model.predict(test_x)
     predictions_2 = single_tree.predict(test_x)
     predictions_3 = random_tree.predict(test_x)
+    predictions_4 = support_vector.predict(test_x)
 
     print('# Negative Class: %s' % classes[0])
     print('# Positive Class: %s' % classes[1])
@@ -128,15 +137,22 @@ def main():
     ppv = ppv_metric(list(test_y), predictions)
     print('PPV: %s' % ppv)
     print('F-Score %s' % fscore_metric(sens, ppv))
+    weights = trained_model.feature_importances_
+    weight_dictionary = {}
+
+    for i in range(0, len(weights)):
+        weight_dictionary.update({headers[i]: weights[i]})
+    for key, value in sorted(weight_dictionary.iteritems(), key=lambda (k,v): (v,k)):
+        print "%s: %s" % (key, value)
 
     print('\n')
     print("--- Unbalanced Random Forest Results ---")
 
     print('Accuracy: %s' % accuracy_score(test_y, predictions_3))
     sens_3 = sensitivity_metric(list(test_y), predictions_3)
-    print('Sensitivity: %s' % sens)
+    print('Sensitivity: %s' % sens_3)
     ppv_3 = ppv_metric(list(test_y), predictions_3)
-    print('PPV: %s' % ppv)
+    print('PPV: %s' % ppv_3)
     print('F-Score %s' % fscore_metric(sens_3, ppv_3))
 
     print('\n')
@@ -144,20 +160,19 @@ def main():
 
     print('Accuracy: %s' % accuracy_score(test_y, predictions_2))
     sens_2 = sensitivity_metric(list(test_y), predictions_2)
-    print('Sensitivity: %s' % sens)
+    print('Sensitivity: %s' % sens_2)
     ppv_2 = ppv_metric(list(test_y), predictions_2)
-    print('PPV: %s' % ppv)
+    print('PPV: %s' % ppv_2)
     print('F-Score %s' % fscore_metric(sens_2, ppv_2))
-
 
     plt.figure(1)
     plt.rcParams.update({'font.size': 12})
-    plt.plot(fscore_metric(sens, ppv), accuracy_score(test_y, predictions), 'ro')
-    plt.plot(fscore_metric(sens_3, ppv), accuracy_score(test_y, predictions_3), 'bs')
-    plt.plot(fscore_metric(sens_2, ppv), accuracy_score(test_y, predictions_2), 'g^')
+    plt.plot(fscore_metric(sens, ppv), sens, 'ro')
+    plt.plot(fscore_metric(sens_3, ppv), sens_3, 'bs')
+    plt.plot(fscore_metric(sens_2, ppv), sens_2, 'g^')
 
-    plt.ylabel('Accuracy')
-    plt.title('Classifier Accuracy over F-Score')
+    plt.ylabel('Sensitivity')
+    plt.title('Classifier Sensitivity over F-Score')
     plt.xlabel('F-Score')
     plt.axis([0, 1, 0, 1])
     plt.legend()
